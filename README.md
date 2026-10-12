@@ -163,7 +163,35 @@ Train and evaluate the six reference classification models across GBP, EUR, and 
 
 ---
 
-## 9. Repository Structure
+## 9. Experiment 2: Numerical Return Regression
+
+Train and evaluate the six reference regression models across GBP, EUR, and JPY to predict next-day continuous log return $r_{t+1}$:
+1. **Random Forest Regressor** (1,000 trees, max depth 100 on unscaled features per paper specification)
+2. **Multi-Layer Perceptron Regressor** (2 hidden layers, validation-tuned architecture and $L2$ penalty)
+3. **Support Vector Regression (SVR with RBF kernel)** ($C$ and $\epsilon$ tuned via validation)
+4. **Support Vector Regression (SVR with Polynomial kernel)** (Degree 2/3, $C$ and $\epsilon$ tuned via validation)
+5. **Lasso Regression** ($\alpha$ tuned via validation)
+6. **Ridge Regression** ($\alpha$ tuned via validation)
+
+```powershell
+# Run Experiment 2 regression pipeline:
+.\.venv\Scripts\python.exe src/regression.py
+
+# Validate regression outputs, target isolation, and finite metric integrity:
+.\.venv\Scripts\python.exe src/validate_regression.py
+```
+
+### Generated Regression Results
+- **Validation Table:** `results/tables/regression_validation_results.csv`
+- **Test Table:** `results/tables/regression_test_results.csv`
+- **Paper Table 2 Comparison Table:** `results/tables/regression_paper_comparison.csv`
+- **Paper Table 4 RF Comparison Table:** `results/tables/regression_table4_rf_comparison.csv`
+- **Actual vs. Predicted Return Plots:** `results/figures/regression_predictions_{gbp,eur,jpy}.png`
+- **Model $R^2$ Comparison Bar Chart:** `results/figures/regression_r2_comparison.png`
+
+---
+
+## 10. Repository Structure
 
 ```text
 ├── data/
@@ -182,7 +210,9 @@ Train and evaluate the six reference classification models across GBP, EUR, and 
 │   ├── feature_engineering.py # End-to-end feature engineering and chronological partitioner
 │   ├── validate_features.py # Feature matrix integrity and leakage test suite
 │   ├── classification.py    # Experiment 1 sign prediction training & evaluation suite
-│   └── validate_classification.py # Classification validation and benchmark test suite
+│   ├── validate_classification.py # Classification validation and benchmark test suite
+│   ├── regression.py        # Experiment 2 return regression training & evaluation suite
+│   └── validate_regression.py # Regression validation and benchmark test suite
 ├── .gitignore               # Excludes caches, venvs, and generated outputs
 ├── requirements.txt         # Minimal project dependencies
 └── README.md                # Project documentation and reproduction guide
@@ -190,10 +220,12 @@ Train and evaluate the six reference classification models across GBP, EUR, and 
 
 ---
 
-## 10. Next Steps: Regression & Trading Strategy Simulation
+## 11. Next Steps: Extension Model & Trading Simulation
 
-1. **Regression Experiments (Experiment 2):** Predict numerical next-day log return values $r_{t+1}$ using Random Forest, MLP, SVM (RBF/Poly), Lasso, and Ridge (benchmarking Table 2 $R^2$ values).
-2. **Extension Model:** Benchmark **XGBoost** on both classification and regression tasks.
-3. **Trading Strategy Backtester (Experiment 3):** Simulate daily currency switching starting with $100 cash (benchmarking Table 3 & Figure 3 cash curves).
+1. **Extension Model (XGBoost):** Benchmark XGBoost on both classification (direction) and regression (return) tasks.
+2. **Trading Strategy Backtester (Experiment 3):** Simulate daily currency switching starting with $100 cash (benchmarking Table 3 & Figure 3 cash curves).
+3. **Final Comparison & Synthesis:** Final project report synthesizing classification, regression, XGBoost extension, and trading returns against the Stanford CS229 paper.
+
+
 
 

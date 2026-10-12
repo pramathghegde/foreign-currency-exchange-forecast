@@ -198,15 +198,13 @@ Simulate the paper's quantitative currency portfolio trading strategy (Section 5
 ### Strategy Execution Rules & Conventions
 - **Model:** Random Forest classifier (1,000 trees, max depth 100) trained strictly on 2001–2015 data.
 - **Directional Signals:** At day $t$, the model predicts $\hat{y}_{t+1} \in \{0, 1\}$.
-- **Single-Currency Position:**
-  - $\hat{y} = 1$: Hold foreign currency. Realized return = $P_{t+1} / P_t = \text{target\_ratio}$.
-  - $\hat{y} = 0$: Hold USD cash. Realized return = $1.00$.
+- **Single-Currency Positions:**
+  - **GBP/USD & EUR/USD (Direct Quotes):** $\hat{y} = 1$ signals foreign currency appreciation; holding foreign currency realizes return factor $P_{t+1} / P_t$. When $\hat{y} = 0$, holding USD cash realizes return factor $1.00$.
+  - **USD/JPY (Indirect Quote, `DEXJPUS`):** The raw quote is JPY per USD. The default `quote_long` backtest applies $P_{t+1} / P_t$ when $\hat{y} = 1$, representing a long USD / short JPY position (rather than holding JPY).
+  - *Methodological Note:* Because the original paper does not document whether its JPY rate was inverted or detail its exact return formula, this represents a documented interpretation rather than verified exact replication.
 - **Multi-Currency Combinations:**
   - Daily capital is divided equally among currencies signalling long ($\hat{y} = 1$).
   - If no currencies signal long, capital remains 100% in USD cash.
-- **Quote Conventions:**
-  - GBP/USD & EUR/USD: Quoted as USD per foreign currency (direct).
-  - USD/JPY: Quoted as JPY per USD (indirect). Evaluated along quoted long position.
 
 ```powershell
 # Run Stage 6 trading simulation backtest:

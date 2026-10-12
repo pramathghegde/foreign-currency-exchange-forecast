@@ -205,9 +205,11 @@ For EUR and JPY, the test set $R^2$ values are $-0.0505$ and $-0.0242$, consiste
 ### 9.1 Strategy Rules & Execution Horizon
 Following Section 5.3 of the paper, we simulated daily currency switching over the 438-day test period (2017-03-07 to 2018-11-30) starting with **\$100.00 initial capital**:
 - **Signal:** At close $t$, the Random Forest classifier predicts direction $\hat{y}_{t+1} \in \{0, 1\}$.
-- **Single Currency:** If $\hat{y} = 1$, hold foreign currency (realized return $P_{t+1}/P_t$); if $\hat{y} = 0$, hold USD cash (realized return $1.00$).
+- **Position & Quote Conventions by Currency Pair:**
+  - **GBP/USD & EUR/USD (Direct Quotes):** Quoted as USD per unit of foreign currency. A predicted class of $\hat{y} = 1$ indicates expected foreign currency appreciation. The raw exchange-rate ratio $P_{t+1}/P_t$ directly represents the return factor for a long foreign-currency position (holding GBP or EUR). If $\hat{y} = 0$, the portfolio holds USD cash (realized return factor $1.00$).
+  - **USD/JPY (Indirect Quote, `DEXJPUS`):** The raw rate is quoted in JPY per USD. An increase in the quoted rate represents USD appreciation and JPY depreciation. The current default `quote_long` strategy applies the raw rate ratio $P_{t+1}/P_t$ when the predicted class is $\hat{y} = 1$. Economically, this represents a **long USD / short JPY** exposure (holding USD against JPY), rather than holding JPY.
+  - **Methodological Limitation:** The original paper does not provide sufficient detail to verify whether its JPY series was inverted or how its JPY portfolio return was calculated. Consequently, exact reproduction of the original paper's JPY trading convention cannot be confirmed, and our backtest is reported as a documented interpretation.
 - **Multi-Currency Combinations:** Portfolio capital is allocated equally among currencies signalling long. If all signal down, capital remains 100% in USD cash.
-- **Quote Conventions:** Direct quotes for GBP/USD and EUR/USD. For USD/JPY, quoted long positions evaluate USD appreciation against JPY.
 
 ### 9.2 Comparison Against Paper Table 3
 
@@ -274,10 +276,11 @@ Non-stationary log price polynomials (`log_price`, `log_price_cube`) received su
 
 ## 12. Limitations & Threats to Validity
 
-1. **Transaction Costs & Bid-Ask Spreads:** The simulation follows the paper by omitting transaction costs. In real-world FX markets, frequent daily switching (150–250 position changes) would incur spreads (1–2 pips) and slippage that could erode net profits.
-2. **Short Out-of-Sample Test Horizon:** The test period spans 438 trading days (March 2017 to November 2018). While identical to the paper, this is too brief to confirm statistical significance across diverse macro cycles.
-3. **Unresolved Paper Implementation Details:** Due to the unavailability of the authors' original repository, exact random seeds, software package versions, and hyperparameter grids could not be verified directly.
-4. **Non-Stationarity of Level Features:** Including raw log prices and price moving averages creates severe distribution shifts for tree-based models when assets establish new historical highs or lows.
+1. **USD/JPY Quote Convention Ambiguity:** Unlike GBP/USD and EUR/USD (which are direct quotes in USD per foreign currency unit), the FRED `DEXJPUS` series is an indirect quote in JPY per USD. An increase in the raw exchange rate reflects USD appreciation against JPY. Our default `quote_long` backtest applies the raw price ratio $P_{t+1}/P_t$ when the model predicts an upward move ($\hat{y} = 1$), which economically evaluates a long USD / short JPY position rather than holding JPY. Because the original Stanford CS229 paper does not provide its daily return formulas or reference code, whether the original authors inverted the JPY rate or evaluated raw quote changes cannot be verified.
+2. **Transaction Costs & Bid-Ask Spreads:** The simulation follows the paper by omitting transaction costs. In real-world FX markets, frequent daily switching (150–250 position changes) would incur spreads (1–2 pips) and slippage that could erode net profits.
+3. **Short Out-of-Sample Test Horizon:** The test period spans 438 trading days (March 2017 to November 2018). While identical to the paper, this is too brief to confirm statistical significance across diverse macro cycles.
+4. **Unresolved Paper Implementation Details:** Due to the unavailability of the authors' original repository, exact random seeds, software package versions, and hyperparameter grids could not be verified directly.
+5. **Non-Stationarity of Level Features:** Including raw log prices and price moving averages creates severe distribution shifts for tree-based models when assets establish new historical highs or lows.
 
 ---
 

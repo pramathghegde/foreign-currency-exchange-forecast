@@ -100,22 +100,60 @@ Expected output: **11 / 11 files PASSED**.
 
 ---
 
-## 6. Repository Structure
+## 6. Feature Engineering & Dataset Preprocessing
+
+Run the automated feature generation pipeline to construct technical indicators, align macroeconomic factors with conservative publication lags, generate chronological train/val/test splits, and export standard-scaled datasets:
+
+```powershell
+# Run the feature engineering pipeline:
+.\.venv\Scripts\python.exe src/feature_engineering.py
+```
+
+### Feature Set Overview (23 Total Features)
+- **15 Technical Indicators (Paper Section 3.2):**
+  - Current & previous log return: $r_t, r_{t-1}$
+  - Moving averages of log returns: 5, 10, 20, 60, 120 days
+  - Log price polynomials: $\ln(P_t), (\ln(P_t))^2, (\ln(P_t))^3$
+  - Moving averages of log price: 5, 10, 20, 60, 220 days
+- **8 Financial & Macroeconomic Indicators (Paper Section 3.1):**
+  - Daily log returns: S&P 500 (`^GSPC`), S&P 100 (`^OEX`), NASDAQ (`^IXIC`), DJIA (`^DJI`)
+  - Policy & macro levels: Fed Funds Effective Rate (`DFF`)
+  - Monthly CPI rate of change with 15-day publication lag (`CPIAUCNS`)
+  - Monthly NBER recession indicator with 30-day reporting lag (`USREC`)
+  - Quarterly public debt growth with 45-day reporting lag (`GFDEBTN`)
+
+---
+
+## 7. Processed Dataset Validation
+
+Inspect the engineered datasets in `data/processed/` for NaNs, infinites, monotonic chronological order, target shift correctness, and absence of train/val/test overlap:
+
+```powershell
+.\.venv\Scripts\python.exe src/validate_features.py
+```
+
+Expected output: **ALL PROCESSED DATASETS PASSED VALIDATION WITH ZERO ERRORS**.
+
+---
+
+## 8. Repository Structure
 
 ```text
 ├── data/
 │   ├── raw/                 # Downloaded raw historical datasets (11 series + metadata.json)
-│   ├── processed/           # Aligned features and cleaned series (.gitkeep)
+│   ├── processed/           # Processed & scaled split datasets (21 CSV files + dataset_metadata.json)
 │   └── DATA_SOURCES.md      # Detailed source documentation and ticker mapping
 ├── notebooks/               # Interactive exploration and prototyping notebooks (.gitkeep)
 ├── reports/                 # Project documentation and milestone reports (.gitkeep)
 ├── results/
-│   ├── figures/             # Exported performance curves and cash plots (.gitkeep)
-│   └── tables/              # Exported comparative metric tables (CSV/LaTeX) (.gitkeep)
+│   ├── figures/             # Exported exploratory plots (exchange_rates_trend.png, etc.)
+│   └── tables/              # Exported comparative metric tables (.gitkeep)
 ├── src/
 │   ├── __init__.py          # Source package initializer
 │   ├── data_loader.py       # Automated data downloader with local file caching
-│   └── validate_data.py     # Data validation and integrity checking suite
+│   ├── validate_data.py     # Raw data validation and integrity checking suite
+│   ├── feature_engineering.py # End-to-end feature engineering and chronological partitioner
+│   └── validate_features.py # Feature matrix integrity and leakage test suite
 ├── .gitignore               # Excludes caches, venvs, and generated outputs
 ├── requirements.txt         # Minimal project dependencies
 └── README.md                # Project documentation and reproduction guide
@@ -123,9 +161,9 @@ Expected output: **11 / 11 files PASSED**.
 
 ---
 
-## 7. Next Steps: Feature Engineering & Preprocessing
+## 9. Next Steps: Model Implementation & Experiments
 
-Once raw data collection and validation are complete, the upcoming milestone (Step 4) will implement `src/feature_engineering.py` to:
-1. Construct the 15 features specified in the Stanford paper (log returns, moving averages of returns, polynomial terms, moving averages of prices).
-2. Align macroeconomic variables forward without lookahead bias.
-3. Generate chronological 80% train, 10% validation, and 10% test splits.
+1. **Classification Suite:** Logistic Regression, Lasso (L1), Ridge (L2), SVM (RBF), Random Forest, MLP, and **XGBoost Classifier** (benchmarking Table 1).
+2. **Regression Suite:** Random Forest, MLP, SVM (RBF/Poly), Lasso, Ridge, and **XGBoost Regressor** (benchmarking Table 2).
+3. **Trading Strategy Backtester:** Algorithmic currency switching backtester starting with $100 cash (benchmarking Table 3 & Figure 3).
+

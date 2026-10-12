@@ -224,7 +224,37 @@ Simulate the paper's quantitative currency portfolio trading strategy (Section 5
 
 ---
 
-## 11. Repository Structure
+## 11. Stage 7: XGBoost Extension
+
+Implements the novel proposed machine learning model (**XGBoost**) beyond the six reference models explored in the Stanford CS229 paper:
+1. **XGBoost Classifier:** Predicts next-day direction sign (`target_clf`).
+2. **XGBoost Regressor:** Predicts next-day continuous log return (`target_reg`).
+
+### Training & Tuning Methodology
+- **Validation Tuning:** Evaluated across depth $\{2, 3, 5\}$, learning rate $\{0.01, 0.03, 0.05, 0.10\}$, subsampling, and $L1/L2$ regularization ($\alpha, \lambda$).
+- **Early Stopping & Leakage Isolation:** Models fit on training data with early stopping on the chronological validation set. The test set remains untouched until final scoring.
+- **Fair Benchmark Comparison:** Evaluated on the identical 23 features, splits, and metrics alongside the reference models.
+
+```powershell
+# Run Stage 7 XGBoost experiments:
+.\.venv\Scripts\python.exe src/xgboost_models.py
+
+# Validate XGBoost outputs, split separation, and metric integrity:
+.\.venv\Scripts\python.exe src/validate_xgboost.py
+```
+
+### Generated XGBoost Results
+- **Validation Tables:** `results/tables/xgboost_classification_validation.csv`, `results/tables/xgboost_regression_validation.csv`
+- **Test Tables:** `results/tables/xgboost_classification_test.csv`, `results/tables/xgboost_regression_test.csv`
+- **Cross-Model Comparison Table:** `results/tables/xgboost_paper_comparison.csv`
+- **Visualizations:**
+  * `results/figures/xgboost_vs_reference_classification.png` (Accuracy comparison across models & currencies)
+  * `results/figures/xgboost_vs_reference_regression.png` (Regression $R^2$ comparison across models & currencies)
+  * `results/figures/xgboost_feature_importance.png` (XGBoost feature importance ranking)
+
+---
+
+## 12. Repository Structure
 
 ```text
 ├── data/
@@ -234,7 +264,7 @@ Simulate the paper's quantitative currency portfolio trading strategy (Section 5
 ├── notebooks/               # Interactive exploration and prototyping notebooks (.gitkeep)
 ├── reports/                 # Project documentation and milestone reports (.gitkeep)
 ├── results/
-│   ├── figures/             # Exported performance curves and cash plots
+│   ├── figures/             # Exported performance curves, cash plots, and comparison charts
 │   └── tables/              # Exported comparative metric tables (CSV)
 ├── src/
 │   ├── __init__.py          # Source package initializer
@@ -247,7 +277,9 @@ Simulate the paper's quantitative currency portfolio trading strategy (Section 5
 │   ├── regression.py        # Experiment 2 return regression training & evaluation suite
 │   ├── validate_regression.py # Regression validation and benchmark test suite
 │   ├── trading_simulation.py # Experiment 3 trading strategy backtester & portfolio simulator
-│   └── validate_trading_simulation.py # Trading simulation validation test suite
+│   ├── validate_trading_simulation.py # Trading simulation validation test suite
+│   ├── xgboost_models.py    # Stage 7 XGBoost classifier & regressor extension suite
+│   └── validate_xgboost.py  # XGBoost validation test suite
 ├── .gitignore               # Excludes caches, venvs, and generated outputs
 ├── requirements.txt         # Minimal project dependencies
 └── README.md                # Project documentation and reproduction guide
@@ -255,10 +287,10 @@ Simulate the paper's quantitative currency portfolio trading strategy (Section 5
 
 ---
 
-## 12. Next Steps: Extension Model (XGBoost) & Final Synthesis
+## 13. Next Steps: Final Project Synthesis & Report
 
-1. **Extension Model (XGBoost):** Benchmark XGBoost as the novel proposed ML model on both classification (direction) and regression (return) tasks.
-2. **Final Comparison & Synthesis:** Final project report synthesizing classification, regression, XGBoost extension, and trading returns against the Stanford CS229 paper.
+1. **Comprehensive Synthesis Report:** Compile end-to-end reproduction results, empirical contrasts with the Stanford CS229 paper, XGBoost extension findings, and quantitative trading insights into the final project documentation.
+
 
 
 

@@ -136,7 +136,34 @@ Expected output: **ALL PROCESSED DATASETS PASSED VALIDATION WITH ZERO ERRORS**.
 
 ---
 
-## 8. Repository Structure
+## 8. Experiment 1: Sign Prediction (Classification)
+
+Train and evaluate the six reference classification models across GBP, EUR, and JPY:
+1. **Logistic Regression** ($C$ tuned via validation)
+2. **Lasso** ($L1$-penalized classification via `liblinear`)
+3. **Ridge** ($L2$-penalized linear classification via `RidgeClassifier`)
+4. **Support Vector Machine** (RBF kernel, $C$ and $\gamma$ tuned via validation)
+5. **Random Forest** (1,000 trees, max depth 100 per paper specification)
+6. **Multi-Layer Perceptron** (2 hidden layers per paper specification)
+
+```powershell
+# Run Experiment 1 classification pipeline:
+.\.venv\Scripts\python.exe src/classification.py
+
+# Validate classification outputs, metric integrity, and absence of target leakage:
+.\.venv\Scripts\python.exe src/validate_classification.py
+```
+
+### Generated Classification Results
+- **Validation Table:** `results/tables/classification_validation_results.csv`
+- **Test Table:** `results/tables/classification_test_results.csv`
+- **Paper Comparison Table:** `results/tables/classification_paper_comparison.csv`
+- **Accuracy Comparison Bar Chart:** `results/figures/classification_accuracy_comparison.png`
+- **Per-Currency Accuracy Plot:** `results/figures/classification_per_currency_accuracy.png`
+
+---
+
+## 9. Repository Structure
 
 ```text
 ├── data/
@@ -146,14 +173,16 @@ Expected output: **ALL PROCESSED DATASETS PASSED VALIDATION WITH ZERO ERRORS**.
 ├── notebooks/               # Interactive exploration and prototyping notebooks (.gitkeep)
 ├── reports/                 # Project documentation and milestone reports (.gitkeep)
 ├── results/
-│   ├── figures/             # Exported exploratory plots (exchange_rates_trend.png, etc.)
-│   └── tables/              # Exported comparative metric tables (.gitkeep)
+│   ├── figures/             # Exported performance curves and cash plots
+│   └── tables/              # Exported comparative metric tables (CSV)
 ├── src/
 │   ├── __init__.py          # Source package initializer
 │   ├── data_loader.py       # Automated data downloader with local file caching
 │   ├── validate_data.py     # Raw data validation and integrity checking suite
 │   ├── feature_engineering.py # End-to-end feature engineering and chronological partitioner
-│   └── validate_features.py # Feature matrix integrity and leakage test suite
+│   ├── validate_features.py # Feature matrix integrity and leakage test suite
+│   ├── classification.py    # Experiment 1 sign prediction training & evaluation suite
+│   └── validate_classification.py # Classification validation and benchmark test suite
 ├── .gitignore               # Excludes caches, venvs, and generated outputs
 ├── requirements.txt         # Minimal project dependencies
 └── README.md                # Project documentation and reproduction guide
@@ -161,9 +190,10 @@ Expected output: **ALL PROCESSED DATASETS PASSED VALIDATION WITH ZERO ERRORS**.
 
 ---
 
-## 9. Next Steps: Model Implementation & Experiments
+## 10. Next Steps: Regression & Trading Strategy Simulation
 
-1. **Classification Suite:** Logistic Regression, Lasso (L1), Ridge (L2), SVM (RBF), Random Forest, MLP, and **XGBoost Classifier** (benchmarking Table 1).
-2. **Regression Suite:** Random Forest, MLP, SVM (RBF/Poly), Lasso, Ridge, and **XGBoost Regressor** (benchmarking Table 2).
-3. **Trading Strategy Backtester:** Algorithmic currency switching backtester starting with $100 cash (benchmarking Table 3 & Figure 3).
+1. **Regression Experiments (Experiment 2):** Predict numerical next-day log return values $r_{t+1}$ using Random Forest, MLP, SVM (RBF/Poly), Lasso, and Ridge (benchmarking Table 2 $R^2$ values).
+2. **Extension Model:** Benchmark **XGBoost** on both classification and regression tasks.
+3. **Trading Strategy Backtester (Experiment 3):** Simulate daily currency switching starting with $100 cash (benchmarking Table 3 & Figure 3 cash curves).
+
 

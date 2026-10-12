@@ -287,9 +287,39 @@ Implements the novel proposed machine learning model (**XGBoost**) beyond the si
 
 ---
 
-## 13. Next Steps: Final Project Synthesis & Report
+## 13. Project Report & Complete Validation
 
-1. **Comprehensive Synthesis Report:** Compile end-to-end reproduction results, empirical contrasts with the Stanford CS229 paper, XGBoost extension findings, and quantitative trading insights into the final project documentation.
+The complete, rigorous project report is available at:
+👉 **[`report/final_project_report.md`](file:///d:/Engineering/PESU/SEM%205/Machine%20Learning/ML%20Mini%20Project/report/final_project_report.md)**
+
+It provides comprehensive theoretical background, dataset audit, classification/regression comparisons, the mathematical root-cause diagnosis of the Random Forest $R^2$ discrepancy, trading curve analyses, and XGBoost benchmark results.
+
+### Complete Project Validation Suite
+To execute the automated validation suite across all 6 modules (verifying data, features, classification, regression, trading simulation, and XGBoost):
+
+```powershell
+.\.venv\Scripts\python.exe -c "
+import subprocess, sys
+scripts = [
+    'src/validate_data.py',
+    'src/validate_features.py',
+    'src/validate_classification.py',
+    'src/validate_regression.py',
+    'src/validate_trading_simulation.py',
+    'src/validate_xgboost.py',
+]
+all_passed = True
+for s in scripts:
+    res = subprocess.run([sys.executable, s])
+    if res.returncode != 0:
+        all_passed = False
+assert all_passed, 'Validation failures detected!'
+print('=' * 50)
+print('ALL 6 PROJECT VALIDATION SUITES PASSED (0 ERRORS)')
+print('=' * 50)
+"
+```
+
 
 
 

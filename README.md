@@ -262,7 +262,8 @@ Implements the novel proposed machine learning model (**XGBoost**) beyond the si
 │   ├── processed/           # Processed & scaled split datasets (21 CSV files + dataset_metadata.json)
 │   └── DATA_SOURCES.md      # Detailed source documentation and ticker mapping
 ├── notebooks/               # Interactive exploration and prototyping notebooks (.gitkeep)
-├── reports/                 # Project documentation and milestone reports (.gitkeep)
+├── report/                  # Final comprehensive project report
+│   └── final_project_report.md # Comprehensive academic reproduction and extension report
 ├── results/
 │   ├── figures/             # Exported performance curves, cash plots, and comparison charts
 │   └── tables/              # Exported comparative metric tables (CSV)
@@ -290,7 +291,7 @@ Implements the novel proposed machine learning model (**XGBoost**) beyond the si
 ## 13. Project Report & Complete Validation
 
 The complete, rigorous project report is available at:
-👉 **[`report/final_project_report.md`](file:///d:/Engineering/PESU/SEM%205/Machine%20Learning/ML%20Mini%20Project/report/final_project_report.md)**
+👉 **[Final Project Report](report/final_project_report.md)**
 
 It provides comprehensive theoretical background, dataset audit, classification/regression comparisons, the mathematical root-cause diagnosis of the Random Forest $R^2$ discrepancy, trading curve analyses, and XGBoost benchmark results.
 

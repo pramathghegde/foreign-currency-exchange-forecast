@@ -158,7 +158,7 @@ def build_macro_and_market_features(
     else:
         macro_df["fed_funds_rate"] = 0.0
 
-    # 3. Monthly CPI Rate of Change (CPIAUCNS) with 15-day publication lag
+    # 3. Monthly CPI Rate of Change (CPIAUCNS) with 15-day publication lag after observation month end
     cpi_path = os.path.join(raw_dir, "fred_CPIAUCNS.csv")
     if os.path.exists(cpi_path):
         cpi = pd.read_csv(cpi_path)
@@ -167,27 +167,30 @@ def build_macro_and_market_features(
         cpi = cpi.dropna().sort_values("DATE").reset_index(drop=True)
         # Rate of change: (CPI_m - CPI_{m-1}) / CPI_{m-1}
         cpi["cpi_change"] = cpi["CPIAUCNS"].pct_change()
-        # Conservative publication lag: Available on the 15th of the following month
-        cpi["AVAILABLE_DATE"] = cpi["DATE"] + pd.DateOffset(months=1, days=14)
+        # Conservative publication lag: Available 15 days after observation month end
+        month_end = cpi["DATE"] + pd.offsets.MonthEnd(0)
+        cpi["AVAILABLE_DATE"] = month_end + pd.Timedelta(days=15)
         cpi_avail = cpi.dropna(subset=["cpi_change"]).set_index("AVAILABLE_DATE")["cpi_change"]
         macro_df["cpi_rate_of_change"] = cpi_avail.reindex(trading_dates).ffill()
     else:
         macro_df["cpi_rate_of_change"] = 0.0
 
-    # 4. NBER Recession Indicator (USREC) with 30-day reporting lag
+    # 4. NBER Recession Indicator (USREC) with 30-day reporting lag after observation month end
     rec_path = os.path.join(raw_dir, "fred_USREC.csv")
     if os.path.exists(rec_path):
         rec = pd.read_csv(rec_path)
         rec["DATE"] = pd.to_datetime(rec["DATE"])
         rec["USREC"] = pd.to_numeric(rec["USREC"].replace(".", None), errors="coerce")
         rec = rec.dropna().sort_values("DATE").reset_index(drop=True)
-        rec["AVAILABLE_DATE"] = rec["DATE"] + pd.DateOffset(months=1)
+        # Conservative reporting lag: 30 days after observation month end
+        month_end_rec = rec["DATE"] + pd.offsets.MonthEnd(0)
+        rec["AVAILABLE_DATE"] = month_end_rec + pd.Timedelta(days=30)
         rec_avail = rec.set_index("AVAILABLE_DATE")["USREC"]
         macro_df["recession_indicator"] = rec_avail.reindex(trading_dates).ffill()
     else:
         macro_df["recession_indicator"] = 0.0
 
-    # 5. Federal Debt Growth Rate (GFDEBTN) with 45-day reporting lag
+    # 5. Federal Debt Growth Rate (GFDEBTN) with 45-day reporting lag after quarter end
     debt_path = os.path.join(raw_dir, "fred_GFDEBTN.csv")
     if os.path.exists(debt_path):
         debt = pd.read_csv(debt_path)
@@ -196,7 +199,8 @@ def build_macro_and_market_features(
         debt = debt.dropna().sort_values("DATE").reset_index(drop=True)
         debt["debt_growth"] = debt["GFDEBTN"].pct_change()
         # Conservative quarterly reporting lag: 45 days after quarter-end observation
-        debt["AVAILABLE_DATE"] = debt["DATE"] + pd.Timedelta(days=45)
+        quarter_end = debt["DATE"] + pd.offsets.QuarterEnd(0)
+        debt["AVAILABLE_DATE"] = quarter_end + pd.Timedelta(days=45)
         debt_avail = debt.dropna(subset=["debt_growth"]).set_index("AVAILABLE_DATE")["debt_growth"]
         macro_df["federal_debt_growth"] = debt_avail.reindex(trading_dates).ffill()
     else:

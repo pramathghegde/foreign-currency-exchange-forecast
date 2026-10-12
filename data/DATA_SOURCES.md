@@ -57,12 +57,36 @@ The macroeconomic series specified in Section 3.1 of the paper are downloaded an
 
 ## 4. Time-Series Alignment & Prevention of Lookahead Bias
 
-1. **Publication Lag Handling:**
-   - `CPIAUCNS` is observed monthly and published mid-month following the observation period.
-   - `GFDEBTN` is observed quarterly and published after the fiscal quarter closes.
-   - In Step 4 (Feature Engineering), these series must only be forward-filled (`ffill()`) after their information release date onto active trading days. **Never apply backward-filling (`bfill()`) or rolling calculations that incorporate $t+1$ values.**
-2. **Holiday Mismatches:**
-   - `DEXUSUK`, `DEXUSEU`, and `DEXJPUS` each have 178 unobserved holiday days across the 18-year history.
-   - Per paper Section 5.2: Days where all markets are closed are skipped. Days where a specific regional market is closed are handled by trading exclusively among open currency pairs.
-3. **Reproducibility & Caching:**
-   - All raw datasets are cached in `data/raw/`. Re-executing `python src/data_loader.py` validates existing caches without redownloading unless called with `--force`.
+1. **Macroeconomic Publication Lag Modeling:**
+   - **Consumer Price Index (`CPIAUCNS`):** The Bureau of Labor Statistics (BLS) publishes monthly CPI data mid-month following the observation period. In our pipeline, availability date is calculated strictly as:
+     $$\text{Available Date} = \text{Observation Month End} + 15\text{ calendar days}$$
+     For example, January 2001 CPI (observed 2001-01-01, ending 2001-01-31) is available to the model starting 2001-02-15.
+   - **NBER Recession Indicator (`USREC`):** Observed monthly on the 1st of the month. Availability date is calculated as:
+     $$\text{Available Date} = \text{Observation Month End} + 30\text{ calendar days}$$
+     *Assumption Note:* In economic history, official NBER Business Cycle Dating Committee declarations can take 6–18 months. Using `USREC` with a 30-day lag follows standard econometric backtesting practice as used in the reference paper, but represents an ex-post availability approximation.
+   - **Federal Debt (`GFDEBTN`):** Total public debt is observed quarterly on the first day of each fiscal quarter. Availability date is calculated strictly from the **end of the observation quarter**:
+     $$\text{Available Date} = \text{Observation Quarter End} + 45\text{ calendar days}$$
+     For example, Q1 2001 debt (observed 2001-01-01, quarter ending 2001-03-31) is available to the model starting 2001-05-15.
+   - All macroeconomic series are merged onto the daily trading calendar strictly using forward-fill (`ffill()`) without backward filling or rolling lookahead.
+
+2. **Currency Quote Directions & Target Consistency:**
+   - **GBP/USD (`DEXUSUK`):** Quoted as **USD per 1 GBP**. Higher rate = GBP appreciates, USD depreciates.
+   - **EUR/USD (`DEXUSEU`):** Quoted as **USD per 1 EUR**. Higher rate = EUR appreciates, USD depreciates.
+   - **USD/JPY (`DEXJPUS`):** Quoted as **JPY per 1 USD**. Higher rate = USD appreciates, JPY depreciates.
+   - **Target Definitions:**
+     - `target_reg` = $\ln(P_{t+1} / P_t)$ (next-day log return of quoted price).
+     - `target_clf` = $1$ if $P_{t+1} > P_t$ else $0$ (next-day upward movement of quoted price).
+     - `target_ratio` = $\frac{P_{t+1}}{P_t} = \exp(\text{target\_reg})$.
+   - **Trading Simulation Interpretation:**
+     In the paper's trading simulation, the investor holds USD and switches into foreign currency when USD is projected to depreciate against that currency:
+     - For JPY (quoted in USD terms): USD depreciates when $\frac{P_{t+1}}{P_t} < 1 \iff r_{t+1} < 0$.
+     - For GBP & EUR (quoted in foreign currency terms): USD depreciates when $\frac{P_t}{P_{t+1}} < 1 \iff r_{t+1} > 0$.
+
+3. **Holiday Mismatches:**
+   - `DEXUSUK`, `DEXUSEU`, and `DEXJPUS` each have 178 unobserved Federal Reserve bank holidays across 2001–2018.
+   - These dates are retained without artificial linear interpolation. Rolling windows skip non-trading dates and track changes across active trading sessions.
+
+4. **Reproducibility & Determinism:**
+   - All raw files are cached in `data/raw/`.
+   - Feature engineering produces identical MD5 checksums across all 21 processed CSV datasets upon re-execution.
+

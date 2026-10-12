@@ -19,9 +19,9 @@ This project explores whether modern supervised machine learning techniques can:
 ## 2. Reference Paper Scope & Extension Requirements
 
 ### Target Currency Pairs (Expressed Relative to USD)
-- **GBP/USD** (U.S. Dollar to British Pound)
-- **USD/EUR** (U.S. Dollar to Euro)
-- **USD/JPY** (U.S. Dollar to Japanese Yen)
+- **GBP/USD** (U.S. Dollar to British Pound) — FRED `DEXUSUK`
+- **EUR/USD** (U.S. Dollar to Euro) — FRED `DEXUSEU`
+- **USD/JPY** (U.S. Dollar to Japanese Yen) — FRED `DEXJPUS`
 
 ### Dataset Timeline & Chronological Splits
 - **Total Historical Window:** January 2001 – December 2018 (Daily closing prices).
@@ -39,76 +39,72 @@ This project explores whether modern supervised machine learning techniques can:
 
 ---
 
-## 3. Planned Experiments
+## 3. Environment Setup & Dependency Installation
 
-### Experiment 1: Sign Prediction (Binary Classification)
-- **Target:** $y_t = \mathbb{I}(r_t > 0)$, where $r_t = \ln(P_t / P_{t-1})$.
-- **Evaluation Metrics:**
-  - Accuracy (Acc)
-  - Normalized Mean Squared Error (NMSE)
-  - Mean Absolute Error (MAE)
-  - Directional Symmetry (DS)
-  - Correct Up Trend (CU)
-  - Correct Down Trend (CD)
+### Step 1: Create Virtual Environment
+A local virtual environment `.venv` configured with system site-package access (to comply with Windows Application Control policies regarding compiled extensions):
 
-### Experiment 2: Value Prediction (Regression)
-- **Target:** Daily log return value $r_{t+1}$.
-- **Evaluation Metrics:**
-  - Coefficient of Determination ($R^2 = 1 - u/v$)
-  - Mean Squared Error (MSE)
-  - Mean Absolute Error (MAE)
-
-### Experiment 3: Trading Strategy Backtest Simulation
-- **Initial Capital:** $100 USD at the start of the test window.
-- **Decision Rule:**
-  - Compute predicted ratio $\hat{R}_{t} = \frac{\widehat{P}_{t+1}}{P_t}$.
-  - If all predicted ratios $\ge 1$, hold USD cash.
-  - If any predicted ratio $< 1$ (USD expected to depreciate against foreign currency), convert 100% of capital into the foreign currency with the lowest ratio for 1 day, then convert back to USD at end of day.
-- **Portfolios Evaluated:**
-  - Single currency: GBP, JPY, EUR
-  - Two-currency combinations: GBP+JPY, JPY+EUR, GBP+EUR
-  - Combined portfolio: GBP+JPY+EUR
-
----
-
-## 4. Environment Setup
-
-### Prerequisites
-- Python 3.10+ (tested on Python 3.14.6)
-- Git
-
-### Installation
-Clone the repository and install required packages:
-```bash
-# Clone repository
-git clone <repo-url>
-cd "ML Mini Project"
-
-# Create and activate virtual environment (optional but recommended)
-python -m venv .venv
-# On Windows:
-.venv\Scripts\activate
-# On Linux/macOS:
-source .venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
+```powershell
+# In PowerShell:
+py -m venv .venv --system-site-packages
 ```
 
-### Dependency Overview
-- `numpy`, `pandas`: Vectorized calculations and time-series dataframe manipulation.
-- `scikit-learn`: Linear models, SVM, Random Forest, MLP, scaling, and evaluation metrics.
-- `xgboost`: Gradient boosting extension model.
-- `matplotlib`, `seaborn`: Visualization and performance plotting.
-- `requests`, `yfinance`: Automated data ingestion from Yahoo Finance and FRED.
+### Step 2: Install Project Dependencies
+Install `yfinance` and `xgboost` inside `.venv`:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+
+### Verified Packages in `.venv`
+- `numpy` 2.5.1
+- `pandas` 3.0.5
+- `scikit-learn` 1.9.0
+- `xgboost` 3.4.1
+- `yfinance` 1.7.0
+- `requests` 2.34.2
+- `curl_cffi` 0.16.3 (enables secure, throttled-free FRED downloads)
+- `matplotlib` 3.11.1
+- `seaborn` 0.13.2
 
 ---
 
-## 5. Repository Structure
+## 4. Historical Data Ingestion & Caching
+
+Download and cache raw daily data from January 1, 2001 through December 31, 2018 into `data/raw/`:
+
+```powershell
+# Run the cached downloader:
+.\.venv\Scripts\python.exe src/data_loader.py
+
+# To force re-download and bypass existing raw cache:
+.\.venv\Scripts\python.exe src/data_loader.py --force
+```
+
+### Data Pipeline Details
+- **Exchange Rates (FRED):** `DEXUSUK` (GBP/USD), `DEXUSEU` (EUR/USD), `DEXJPUS` (USD/JPY).
+- **Market Indices (Yahoo Finance):** `^GSPC` (S&P 500), `^OEX` (S&P 100), `^IXIC` (NASDAQ), `^DJI` (Dow Jones).
+- **Macroeconomic Indicators (FRED):** `DFF` (Fed Funds Rate), `CPIAUCNS` (CPI), `USREC` (Recession Indicator), `GFDEBTN` (Public Debt).
+
+---
+
+## 5. Raw Data Validation
+
+Inspect and validate downloaded datasets to verify date coverage, duplicate avoidance, and absence of invalid/negative rates:
+
+```powershell
+.\.venv\Scripts\python.exe src/validate_data.py
+```
+
+Expected output: **11 / 11 files PASSED**.
+
+---
+
+## 6. Repository Structure
 
 ```text
 ├── data/
-│   ├── raw/                 # Downloaded raw historical data (.gitkeep)
+│   ├── raw/                 # Downloaded raw historical datasets (11 series + metadata.json)
 │   ├── processed/           # Aligned features and cleaned series (.gitkeep)
 │   └── DATA_SOURCES.md      # Detailed source documentation and ticker mapping
 ├── notebooks/               # Interactive exploration and prototyping notebooks (.gitkeep)
@@ -117,7 +113,9 @@ pip install -r requirements.txt
 │   ├── figures/             # Exported performance curves and cash plots (.gitkeep)
 │   └── tables/              # Exported comparative metric tables (CSV/LaTeX) (.gitkeep)
 ├── src/
-│   └── __init__.py          # Modular Python source package
+│   ├── __init__.py          # Source package initializer
+│   ├── data_loader.py       # Automated data downloader with local file caching
+│   └── validate_data.py     # Data validation and integrity checking suite
 ├── .gitignore               # Excludes caches, venvs, and generated outputs
 ├── requirements.txt         # Minimal project dependencies
 └── README.md                # Project documentation and reproduction guide
@@ -125,23 +123,9 @@ pip install -r requirements.txt
 
 ---
 
-## 6. Execution Workflow (Future Pipeline)
+## 7. Next Steps: Feature Engineering & Preprocessing
 
-Once data acquisition and feature engineering modules are implemented, the execution sequence will be:
-
-```bash
-# 1. Download market indices, FX rates, and macroeconomic indicators
-python src/data_loader.py
-
-# 2. Build 15 technical and macro features with chronological train/val/test splits
-python src/feature_engineering.py
-
-# 3. Train models and generate classification benchmarks (Table 1 replication)
-python src/train_classification.py
-
-# 4. Train models and generate regression benchmarks (Table 2 replication)
-python src/train_regression.py
-
-# 5. Run trading strategy backtester and produce cash growth curves (Table 3 & Figure 3 replication)
-python src/backtest_simulation.py
-```
+Once raw data collection and validation are complete, the upcoming milestone (Step 4) will implement `src/feature_engineering.py` to:
+1. Construct the 15 features specified in the Stanford paper (log returns, moving averages of returns, polynomial terms, moving averages of prices).
+2. Align macroeconomic variables forward without lookahead bias.
+3. Generate chronological 80% train, 10% validation, and 10% test splits.

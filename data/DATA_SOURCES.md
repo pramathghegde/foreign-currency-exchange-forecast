@@ -1,71 +1,68 @@
 # Data Sources & Feasibility Specification
 
-This document details all data series required to reproduce and extend the Stanford CS229 (2019) research paper *"Foreign Currency Exchange Rate Forecast"*.
+This document details all data series collected and cached for the Stanford CS229 (2019) research paper replication: *"Foreign Currency Exchange Rate Forecast"*.
 
-Expected study period: **January 1, 2001 to December 31, 2018** (Daily trading frequency).
-
----
-
-## 1. Financial Market Indices
-
-The original paper utilized U.S. financial equity market indices sourced from CRSP (Center for Research in Security Prices). These series are publicly verifiable and available at daily resolution via Yahoo Finance (`yfinance` / chart API).
-
-| Asset Name | Primary Ticker (Yahoo Finance) | Frequency | Date Range Verified (2001–2018) | Observations Returned | Status & Limitations |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **S&P 500** | `^GSPC` | Daily | 2001-01-02 to 2018-12-28 | 4,526 trading days | **Complete**. Covers entire study window. Standard NYSE/NASDAQ holiday calendar. |
-| **S&P 100** | `^OEX` | Daily | 2001-01-02 to 2018-12-28 | 4,526 trading days | **Complete**. Covers entire study window. |
-| **NASDAQ Composite** | `^IXIC` | Daily | 2001-01-02 to 2018-12-28 | 4,526 trading days | **Complete**. Covers entire study window. |
-| **Dow Jones Industrial Average** | `^DJI` | Daily | 2001-01-02 to 2018-12-28 | 4,526 trading days | **Complete**. Covers entire study window. |
+Study Period: **January 1, 2001 to December 31, 2018** (Daily trading frequency).  
+Data Directory: `data/raw/`  
+Automated Loader: `src/data_loader.py`  
+Validation Suite: `src/validate_data.py`
 
 ---
 
-## 2. Foreign Exchange Rates
+## 1. Currency Exchange Rates (Primary Source: FRED)
 
-The original paper sourced daily foreign exchange closing prices from Bloomberg Terminal.
+The original paper utilized Bloomberg Terminal daily close prices. For full public reproducibility without the 2001–2003 coverage gap present on Yahoo Finance, official daily exchange rates are obtained directly from the **Board of Governors of the Federal Reserve System (H.10 Release via FRED)**.
 
-### Yahoo Finance Availability Check
+| Series ID | File Name | Quoted Currency Pair | Quote Convention / Units | Date Coverage | Total Rows | Unobserved (Holidays) | Valid Numeric Rows | Min Rate | Max Rate |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `DEXUSUK` | `fred_DEXUSUK.csv` | **GBP / USD** | USD per 1 GBP ($) | 2001-01-01 to 2018-12-31 | 4,696 | 178 | 4,518 | 1.2118 | 2.1104 |
+| `DEXUSEU` | `fred_DEXUSEU.csv` | **EUR / USD** | USD per 1 EUR ($) | 2001-01-01 to 2018-12-31 | 4,696 | 178 | 4,518 | 0.8370 | 1.6010 |
+| `DEXJPUS` | `fred_DEXJPUS.csv` | **USD / JPY** | JPY per 1 USD (¥) | 2001-01-01 to 2018-12-31 | 4,696 | 178 | 4,518 | 75.720 | 134.77 |
 
-| Currency Pair | Paper Expression | Yahoo Finance Ticker | Verified Date Range (Yahoo Finance) | Observations Returned | Status & Findings |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **GBP / USD** | GBP/USD | `GBPUSD=X` | 2003-12-01 to 2018-12-28 | 3,935 daily quotes | **Partial**. Yahoo Finance historical records for GBP/USD begin on Dec 1, 2003. Observations from 2001-01-01 to 2003-11-30 are missing on Yahoo Finance. |
-| **USD / EUR** | USD/EUR | `EURUSD=X` | 2003-12-01 to 2018-12-28 | 3,935 daily quotes | **Partial**. Yahoo Finance historical records for EUR/USD begin on Dec 1, 2003. (Note: Yahoo quotes EUR/USD as USD per EUR; inverted quote gives USD/EUR). |
-| **USD / JPY** | USD/JPY | `JPY=X` | 2001-01-01 to 2018-12-28 | 4,695 daily quotes | **Complete**. Full 2001–2018 daily history available on Yahoo Finance. |
-
-### Public Substitute / Backfill for 2001–2003 FX Data: Federal Reserve (FRED)
-
-To overcome the 2001–2003 gap on Yahoo Finance without fabricating data, the Board of Governors of the Federal Reserve System (H.10 Foreign Exchange Rates release via FRED) provides verified daily official rates:
-
-| Currency Pair | FRED Series ID | Verified Date Range (FRED) | Observations (2001–2018) | Role / Solution |
-| :--- | :--- | :--- | :--- | :--- |
-| **U.S. / U.K. Foreign Exchange Rate** | `DEXUSUK` | 2001-01-01 to 2018-12-31 | 4,696 daily records | Supplies daily GBP/USD rates for the full 2001–2018 window (including the 2001–2003 gap). |
-| **U.S. / Euro Foreign Exchange Rate** | `DEXUSEU` | 2001-01-01 to 2018-12-31 | 4,696 daily records | Supplies daily EUR/USD rates for the full 2001–2018 window (including the 2001–2003 gap). |
-| **Japan / U.S. Foreign Exchange Rate** | `DEXJPUS` | 2001-01-01 to 2018-12-31 | 4,696 daily records | Corroborates daily USD/JPY rates for the full 2001–2018 window. |
+> [!IMPORTANT]
+> **Exchange Rate Quote Conventions:**
+> - `DEXUSUK` gives USD per GBP ($1.21 – $2.11). An increase means GBP strengthens and USD weakens.
+> - `DEXUSEU` gives USD per EUR ($0.84 – $1.60). An increase means EUR strengthens and USD weakens. Note: In the paper's terminology "USD/EUR" is referenced, but the pricing unit is EUR/USD standard market quote.
+> - `DEXJPUS` gives JPY per USD (¥75.72 – ¥134.77). An increase means USD strengthens and JPY weakens.
+> 
+> Missing observations (marked as `.` in raw FRED files) correspond to official Federal Reserve market holidays and have been preserved without artificial interpolation.
 
 ---
 
-## 3. Macroeconomic Indicators
+## 2. Financial Market Indices (Primary Source: Yahoo Finance)
 
-The original paper utilized four core macroeconomic factors from CRSP / Federal Reserve records. These are verified and directly downloadable via the Federal Reserve Bank of St. Louis (FRED):
+The four equity market indices referenced in the Stanford paper were retrieved from Yahoo Finance via the cached loader:
 
-| Indicator Name | FRED Series ID | Native Frequency | Verified Date Range (FRED) | Observations (2001–2018) | Processing & Alignment Strategy |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Consumer Price Index (CPI)** | `CPIAUCNS` *(Consumer Price Index for All Urban Consumers: All Items)* | Monthly | 2001-01-01 to 2018-12-01 | 216 monthly values | Calculate rate of change: $\Delta \text{CPI}_t = \frac{\text{CPI}_t - \text{CPI}_{t-1}}{\text{CPI}_{t-1}}$. Forward-fill (`ffill()`) onto daily trading dates. |
-| **Federal Funds Rate** | `DFF` *(Federal Funds Effective Rate)* | Daily | 2001-01-01 to 2018-12-31 | 6,574 daily values | **Direct Daily Match**. Alternative monthly benchmark is `FEDFUNDS` (216 observations). |
-| **NBER Recession Indicator** | `USREC` *(NBER based Recession Indicator for US)* | Monthly | 2001-01-01 to 2018-12-01 | 216 monthly values | Binary indicator (0 = expansion, 1 = recession). Forward-fill onto daily trading calendar. Daily series `USRECD` also exists. |
-| **Federal Debt** | `GFDEBTN` *(Federal Debt: Total Public Debt)* | Quarterly | 2001-01-01 to 2018-10-01 | 72 quarterly values | Expressed in Millions of Dollars. Forward-fill (`ffill()`) to daily frequency based on release dates to avoid lookahead bias. |
+| Ticker | File Name | Index Name | Columns Preserved | Date Coverage | Total Trading Days | Missing Values | Min Close | Max Close |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `^GSPC` | `yfinance_GSPC.csv` | **S&P 500** | Open, High, Low, Close, Adj Close, Volume | 2001-01-02 to 2018-12-31 | 4,527 | 0 | 676.53 | 2,930.75 |
+| `^OEX` | `yfinance_OEX.csv` | **S&P 100** | Open, High, Low, Close, Adj Close, Volume | 2001-01-02 to 2018-12-31 | 4,527 | 0 | 322.13 | 1,302.80 |
+| `^IXIC` | `yfinance_IXIC.csv` | **NASDAQ Composite** | Open, High, Low, Close, Adj Close, Volume | 2001-01-02 to 2018-12-31 | 4,527 | 0 | 1,114.11 | 8,109.69 |
+| `^DJI` | `yfinance_DJI.csv` | **Dow Jones Industrial Average** | Open, High, Low, Close, Adj Close, Volume | 2001-01-02 to 2018-12-31 | 4,527 | 0 | 6,547.05 | 26,828.39 |
 
 ---
 
-## 4. Preservation of Chronology & Prevention of Lookahead Bias
+## 3. Macroeconomic Indicators (Primary Source: FRED)
 
-1. **Strict Forward Alignment:**
-   - Lower-frequency macroeconomic variables (monthly CPI, quarterly Federal Debt) must only be merged onto daily trading timestamps using historical release dates or trailing forward-fill (`ffill()`).
-   - No backward filling (`bfill()`) or rolling calculations that incorporate future timestamps ($t+1$) into features at time $t$.
-2. **Missing Trading Day Alignment:**
-   - Bank holidays differ between London, Frankfurt, Tokyo, and New York.
-   - Per Section 5.2 of the Stanford CS229 paper: if an exchange rate is not available on a particular day due to regional market closures, trade simulation only allocates across active markets for that day; if all markets are closed, the day is skipped.
-3. **Partitioning:**
-   - **Train:** 2001 to early 2017 (~80% of data).
-   - **Validation:** 2017 (~10% of data).
-   - **Test:** March 2017 through November 30, 2018 (~10% of data).
-   - Model parameters, scalers (`StandardScaler`), and feature selectors must be fitted strictly on training data and applied out-of-sample to validation/test partitions.
+The macroeconomic series specified in Section 3.1 of the paper are downloaded and cached from FRED:
+
+| Series ID | File Name | Indicator Description | Native Frequency | Unit / Scale | Date Coverage | Observations | Min Value | Max Value |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `DFF` | `fred_DFF.csv` | **Federal Funds Effective Rate** | Daily (7 days/wk) | Percent (%) | 2001-01-01 to 2018-12-31 | 6,574 | 0.04% | 6.67% |
+| `CPIAUCNS` | `fred_CPIAUCNS.csv` | **Consumer Price Index (CPI)** | Monthly | Index 1982-84=100 | 2001-01-01 to 2018-12-01 | 216 | 175.10 | 252.885 |
+| `USREC` | `fred_USREC.csv` | **NBER Recession Indicator** | Monthly | Binary (0 or 1) | 2001-01-01 to 2018-12-01 | 216 | 0.0 | 1.0 |
+| `GFDEBTN` | `fred_GFDEBTN.csv` | **Federal Debt: Total Public Debt** | Quarterly | Millions of USD | 2001-01-01 to 2018-10-01 | 72 | \$5,726,815M | \$21,974,096M |
+
+---
+
+## 4. Time-Series Alignment & Prevention of Lookahead Bias
+
+1. **Publication Lag Handling:**
+   - `CPIAUCNS` is observed monthly and published mid-month following the observation period.
+   - `GFDEBTN` is observed quarterly and published after the fiscal quarter closes.
+   - In Step 4 (Feature Engineering), these series must only be forward-filled (`ffill()`) after their information release date onto active trading days. **Never apply backward-filling (`bfill()`) or rolling calculations that incorporate $t+1$ values.**
+2. **Holiday Mismatches:**
+   - `DEXUSUK`, `DEXUSEU`, and `DEXJPUS` each have 178 unobserved holiday days across the 18-year history.
+   - Per paper Section 5.2: Days where all markets are closed are skipped. Days where a specific regional market is closed are handled by trading exclusively among open currency pairs.
+3. **Reproducibility & Caching:**
+   - All raw datasets are cached in `data/raw/`. Re-executing `python src/data_loader.py` validates existing caches without redownloading unless called with `--force`.

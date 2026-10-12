@@ -191,7 +191,40 @@ Train and evaluate the six reference regression models across GBP, EUR, and JPY 
 
 ---
 
-## 10. Repository Structure
+## 10. Experiment 3: Trading Strategy Simulation & Portfolio Backtesting
+
+Simulate the paper's quantitative currency portfolio trading strategy (Section 5.3, Table 3, Figure 3) starting with an initial capital of $100.00 across the out-of-sample test period (2017-03-07 to 2018-11-30, 438 trading days).
+
+### Strategy Execution Rules & Conventions
+- **Model:** Random Forest classifier (1,000 trees, max depth 100) trained strictly on 2001–2015 data.
+- **Directional Signals:** At day $t$, the model predicts $\hat{y}_{t+1} \in \{0, 1\}$.
+- **Single-Currency Position:**
+  - $\hat{y} = 1$: Hold foreign currency. Realized return = $P_{t+1} / P_t = \text{target\_ratio}$.
+  - $\hat{y} = 0$: Hold USD cash. Realized return = $1.00$.
+- **Multi-Currency Combinations:**
+  - Daily capital is divided equally among currencies signalling long ($\hat{y} = 1$).
+  - If no currencies signal long, capital remains 100% in USD cash.
+- **Quote Conventions:**
+  - GBP/USD & EUR/USD: Quoted as USD per foreign currency (direct).
+  - USD/JPY: Quoted as JPY per USD (indirect). Evaluated along quoted long position.
+
+```powershell
+# Run Stage 6 trading simulation backtest:
+.\.venv\Scripts\python.exe src/trading_simulation.py
+
+# Validate trading simulation outputs, capital accounting, and math integrity:
+.\.venv\Scripts\python.exe src/validate_trading_simulation.py
+```
+
+### Generated Trading Simulation Results
+- **Full Results Table:** `results/tables/trading_simulation_results.csv`
+- **Paper Table 3 Comparison Table:** `results/tables/trading_paper_comparison.csv`
+- **Figure 3 Reproduction Plot:** `results/figures/trading_figure3_portfolio_cash.png`
+- **Final Balance Comparison Bar Chart:** `results/figures/trading_final_balance_comparison.png`
+
+---
+
+## 11. Repository Structure
 
 ```text
 ├── data/
@@ -212,7 +245,9 @@ Train and evaluate the six reference regression models across GBP, EUR, and JPY 
 │   ├── classification.py    # Experiment 1 sign prediction training & evaluation suite
 │   ├── validate_classification.py # Classification validation and benchmark test suite
 │   ├── regression.py        # Experiment 2 return regression training & evaluation suite
-│   └── validate_regression.py # Regression validation and benchmark test suite
+│   ├── validate_regression.py # Regression validation and benchmark test suite
+│   ├── trading_simulation.py # Experiment 3 trading strategy backtester & portfolio simulator
+│   └── validate_trading_simulation.py # Trading simulation validation test suite
 ├── .gitignore               # Excludes caches, venvs, and generated outputs
 ├── requirements.txt         # Minimal project dependencies
 └── README.md                # Project documentation and reproduction guide
@@ -220,11 +255,11 @@ Train and evaluate the six reference regression models across GBP, EUR, and JPY 
 
 ---
 
-## 11. Next Steps: Extension Model & Trading Simulation
+## 12. Next Steps: Extension Model (XGBoost) & Final Synthesis
 
-1. **Extension Model (XGBoost):** Benchmark XGBoost on both classification (direction) and regression (return) tasks.
-2. **Trading Strategy Backtester (Experiment 3):** Simulate daily currency switching starting with $100 cash (benchmarking Table 3 & Figure 3 cash curves).
-3. **Final Comparison & Synthesis:** Final project report synthesizing classification, regression, XGBoost extension, and trading returns against the Stanford CS229 paper.
+1. **Extension Model (XGBoost):** Benchmark XGBoost as the novel proposed ML model on both classification (direction) and regression (return) tasks.
+2. **Final Comparison & Synthesis:** Final project report synthesizing classification, regression, XGBoost extension, and trading returns against the Stanford CS229 paper.
+
 
 
 

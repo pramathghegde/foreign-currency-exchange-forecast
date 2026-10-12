@@ -84,7 +84,7 @@ EXPECTED_FILES = {
     "yfinance_DJI.csv": {
         "series_id": "^DJI",
         "name": "Dow Jones Industrial Average",
-        "category": "market_index",
+        "category": "market_index",git
         "expected_freq": "Daily",
         "val_col": "Close",
         "is_fx": False,
